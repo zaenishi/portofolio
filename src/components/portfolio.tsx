@@ -66,9 +66,15 @@ export default function Portfolio() {
     return project.category.toLowerCase().includes("web") || project.category.toLowerCase().includes("product");
   });
 
-  const emailHref = site.email ? `mailto:${site.email}` : "#contact";
-  const socialIcons = [Github, Linkedin, Instagram, MessageCircle];
-
+    const emailHref = site.email ? `mailto:${site.email}` : "#contact";
+    const socialIcons = [Github, Linkedin, Instagram, MessageCircle];
+    
+    const socials: readonly {
+      label: string;
+      href?: string;
+      handle?: string;
+    }[] = site.socials;
+    
   return (
     <main id="home" className="portfolio">
       <div className="top-progress" aria-hidden="true"/>
@@ -203,7 +209,7 @@ export default function Portfolio() {
             <a className="button button-light" href={emailHref}>{site.email ? "Send me an email" : "Set up your email first"} <ArrowUpRight size={16}/></a>
           </div>
           <div className="social-row">
-            {site.socials.map((social, index) => {
+            {socials.map((social, index) => {
               const Icon = socialIcons[index] || Globe2;
               return social.href
                 ? <a key={social.label} href={social.href} target="_blank" rel="noreferrer"><Icon size={15}/>{social.label}<ArrowUpRight size={12}/></a>
