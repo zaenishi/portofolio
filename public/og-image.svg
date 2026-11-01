@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#f2f0e8"/>
+  <path d="M0 0H1200V630H0Z" fill="none" stroke="#d7d5cb" stroke-width="2"/>
+  <text x="80" y="112" fill="#20231f" font-family="Arial,sans-serif" font-size="34" font-weight="700">🍄 ZAENISHI®</text>
+  <text x="80" y="300" fill="#20231f" font-family="Arial,sans-serif" font-size="82" font-weight="700">Growing ideas into</text>
+  <text x="80" y="395" fill="#78866e" font-family="Georgia,serif" font-size="92" font-style="italic">digital experiences.</text>
+  <text x="82" y="520" fill="#77796f" font-family="monospace" font-size="18" letter-spacing="3">INDEPENDENT DEVELOPER / INDONESIA</text>
+  <circle cx="1000" cy="180" r="105" fill="none" stroke="#c9c9bd" stroke-width="2"/>
+  <circle cx="1000" cy="180" r="135" fill="none" stroke="#a6ad9c" stroke-dasharray="5 9" stroke-width="2"/>
+  <text x="1000" y="210" text-anchor="middle" font-size="105">🍄</text>
+</svg>
