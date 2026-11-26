@@ -1,230 +1,91 @@
 "use client";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import type { Content } from "@/data/content";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import {
-  ArrowDown, ArrowDownRight, ArrowRight, ArrowUpRight, Menu, X,
-  Github, Linkedin, Instagram, Mail, MoveUpRight, Code2, Sparkles,
-  Globe2, MessageCircle, MousePointer2
-} from "lucide-react";
-import { projects } from "@/data/projects";
-import { site } from "@/data/site";
+type Lg = "id" | "en";
+const K = ["about", "skills", "path", "work", "contact"] as const;
+const IC = ["🍄", "🎒", "🗺️", "🎮", "💌"];
+const T = {
+  id: { start: "Mulai Petualangan", skip: "Lewati", next: "Lanjut", back: "Kembali", hint: "Tips: pakai tombol ◀ ▶ atau panah keyboard", done: "Petualangan Selesai!", doneT: "Kamu sudah mengenal semuanya. Silakan jelajahi portofolio lengkapnya.", enter: "Masuk Portofolio", replay: "Main lagi", about: "Tentang", skills: "Keahlian", path: "Perjalanan", work: "Proyek", contact: "Kontak", demo: "Demo", repo: "Kode", hi: "Halo, aku" },
+  en: { start: "Start Adventure", skip: "Skip", next: "Next", back: "Back", hint: "Tip: use ◀ ▶ or the arrow keys", done: "Quest Complete!", doneT: "You now know it all. Feel free to explore the full portfolio.", enter: "Enter Portfolio", replay: "Play again", about: "About", skills: "Skills", path: "Journey", work: "Projects", contact: "Contact", demo: "Demo", repo: "Code", hi: "Hi, I'm" }
+};
+const sf = (u: string) => (/^(https?:|mailto:)/i.test(u) ? u : "#");
+const A = { target: "_blank", rel: "noopener noreferrer" };
 
-const navItems = [
-  ["About", "#about"], ["Works", "#work"], ["Expertise", "#expertise"],
-  ["Journey", "#journey"], ["Services", "#services"], ["Contact", "#contact"]
-];
-
-function Reveal({ children, className = "", delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
-  return <div className={`reveal ${className}`} style={{ ["--delay" as string]: `${delay}ms` }}>{children}</div>;
+function Sec({ k, c, l }: { k: (typeof K)[number]; c: Content; l: Lg }) {
+  const t = T[l];
+  if (k === "about") return <><p>{c.about[l]}</p><p className="ok">● {c.avail[l]}</p><ul className="ls">{c.services.map((s, i) => <li key={i}>{s[l]}</li>)}</ul></>;
+  if (k === "skills") return <div className="gr">{c.skills.map((s, i) => <div key={i}><h4>{s.g}</h4><p>{s.items.map((x, j) => <span className="chip" key={j}>{x}</span>)}</p></div>)}</div>;
+  if (k === "path") return <ol className="ls">{c.journey.map((j, i) => <li key={i}><b>{j.y}</b> {j.t[l]}</li>)}</ol>;
+  if (k === "work") return (
+    <div className="gr">{c.projects.map((p, i) => (
+      <article className="card" key={i}><small>{p.st[l]} · {p.year}</small><h3>{p.name}</h3><p>{p.d[l]}</p>
+        <p>{p.tech.map((x, j) => <span className="chip" key={j}>{x}</span>)}</p>
+        <p>{p.demo && <a href={sf(p.demo)} {...A}>{t.demo} ↗</a>} {p.repo && <a href={sf(p.repo)} {...A}>{t.repo} ↗</a>}</p></article>))}</div>);
+  return <><p><a href={"mailto:" + c.email}>{c.email}</a></p><p>{c.socials.map((s, i) => <a className="chip" key={i} href={sf(s.href)} {...A}>{s.label}</a>)}</p></>;
 }
 
-function ProjectArtwork({ visual }: { visual: string }) {
-  const symbols: Record<string, string> = { horror: "✳", community: "◉", commerce: "⌘", bot: "⌁" };
-  return (
-    <div className={`project-visual visual-${visual}`}>
-      <div className="visual-top"><span>ZAENISHI / SELECTED WORK</span><span>🍄</span></div>
-      <div className="visual-center"><span className="visual-symbol">{symbols[visual] || "✳"}</span><span className="visual-orbit orbit-one"/><span className="visual-orbit orbit-two"/></div>
-      <div className="visual-bottom"><span>INDEPENDENT PROJECT</span><span>OPEN CASE STUDY ↗</span></div>
-    </div>
-  );
-}
-
-export default function Portfolio() {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState("home");
-  const [filter, setFilter] = useState("All");
-
+export default function Portfolio({ c }: { c: Content }) {
+  const [l, setL] = useState<Lg>("id"), [open, setOpen] = useState(true), [s, setS] = useState(-1);
+  const tap = useRef({ n: 0, t: 0 }), r = useRouter(), t = T[l];
+  useEffect(() => { try { if (localStorage.getItem("jm_l") === "en") setL("en"); if (localStorage.getItem("jm_d")) setOpen(false); } catch {} }, []);
+  useEffect(() => { document.documentElement.lang = l; try { localStorage.setItem("jm_l", l); } catch {} }, [l]);
+  useEffect(() => { document.body.style.overflow = open ? "hidden" : ""; }, [open]);
+  const fin = () => { setOpen(false); try { localStorage.setItem("jm_d", "1"); } catch {} window.scrollTo(0, 0); };
   useEffect(() => {
-    const nodes = document.querySelectorAll(".reveal");
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add("is-visible");
-          observer.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.12 });
-    nodes.forEach((node) => observer.observe(node));
-
-    const sections = document.querySelectorAll("main section[id]");
-    const sectionObserver = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) setActiveSection(entry.target.id);
-      });
-    }, { rootMargin: "-35% 0px -55% 0px" });
-    sections.forEach((section) => sectionObserver.observe(section));
-
-    return () => { observer.disconnect(); sectionObserver.disconnect(); };
+    if (!open) return;
+    const f = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight") setS((x) => Math.min(x + 1, 5));
+      if (e.key === "ArrowLeft") setS((x) => Math.max(x - 1, -1));
+      if (e.key === "Escape") fin();
+    };
+    window.addEventListener("keydown", f);
+    return () => window.removeEventListener("keydown", f);
+  }, [open]);
+  useEffect(() => { // penghalang awam (bukan keamanan nyata), hanya production
+    if (process.env.NODE_ENV !== "production") return;
+    const k = (e: KeyboardEvent) => { const x = e.key.toLowerCase(); if (e.key === "F12" || (e.ctrlKey && (x === "u" || (e.shiftKey && "ijc".includes(x) && x.length === 1)))) e.preventDefault(); };
+    const m = (e: Event) => e.preventDefault();
+    window.addEventListener("keydown", k); window.addEventListener("contextmenu", m);
+    return () => { window.removeEventListener("keydown", k); window.removeEventListener("contextmenu", m); };
   }, []);
-
-  const categories = ["All", "Web", "Game", "Automation"];
-  const filteredProjects = projects.filter((project) => {
-    if (filter === "All") return true;
-    if (filter === "Game") return project.category.toLowerCase().includes("game");
-    if (filter === "Automation") return project.category.toLowerCase().includes("automation") || project.name.toLowerCase().includes("bot");
-    return project.category.toLowerCase().includes("web") || project.category.toLowerCase().includes("product");
-  });
-
-    const emailHref = site.email ? `mailto:${site.email}` : "#contact";
-    const socialIcons = [Github, Linkedin, Instagram, MessageCircle];
-    
-    const socials: readonly {
-      label: string;
-      href?: string;
-      handle?: string;
-    }[] = site.socials;
-    
+  const logo = () => { const n = Date.now(), z = tap.current; z.n = n - z.t < 900 ? z.n + 1 : 1; z.t = n; if (z.n >= 7) r.push("/ruang-jamur"); };
+  const lang = <button onClick={() => setL(l === "id" ? "en" : "id")} aria-label="Ganti bahasa / Switch language">{l === "id" ? "ID ▸ EN" : "EN ▸ ID"}</button>;
   return (
-    <main id="home" className="portfolio">
-      <div className="top-progress" aria-hidden="true"/>
-      <header className="site-header shell">
-        <Link href="#home" className="wordmark" aria-label="Zaenishi home">
-          <span className="brand-mushroom">🍄</span> ZAENISHI<span className="brand-dot">®</span>
-        </Link>
-        <nav className="desktop-nav" aria-label="Main navigation">
-          {navItems.map(([label, href]) => (
-            <a key={href} href={href} className={activeSection === href.slice(1) ? "nav-active" : ""}>{label}</a>
-          ))}
-        </nav>
-        <a className="header-cta" href="#contact">Let's talk <ArrowUpRight size={14}/></a>
-        <button className="mobile-menu-button" onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? "Close menu" : "Open menu"} aria-expanded={menuOpen}>
-          {menuOpen ? <X/> : <Menu/>}
-        </button>
-      </header>
-
-      {menuOpen && <div className="mobile-menu">
-        <div className="mobile-menu-head"><span>EXPLORE</span><span>🍄</span></div>
-        {navItems.map(([label, href], index) => <a key={href} href={href} onClick={() => setMenuOpen(false)}><small>0{index + 1}</small>{label}<ArrowUpRight size={18}/></a>)}
-        <p>GROWING IDEAS INTO DIGITAL EXPERIENCES.</p>
-      </div>}
-
-      <section className="hero shell" aria-labelledby="hero-title">
-        <div className="hero-topline"><span><i className="status-dot"/> {site.availability}</span><span>BASED IN {site.location.toUpperCase()}</span></div>
-        <div className="hero-content">
-          <Reveal className="hero-kicker"><span className="kicker-line"/> INDEPENDENT DEVELOPER <span className="kicker-star">✳</span> DIGITAL CREATOR</Reveal>
-          <Reveal delay={100}><h1 id="hero-title">Growing ideas<br/>into <span className="hero-italic">digital</span><br/><span className="hero-last">experiences<span className="hero-period">.</span></span></h1></Reveal>
-          <Reveal delay={200} className="hero-bottom">
-            <p>{site.intro}</p>
-            <div className="hero-actions">
-              <a className="button button-dark" href="#work">Explore my work <ArrowUpRight size={16}/></a>
-              <a className="text-link" href="#about">A little about me <ArrowDownRight size={16}/></a>
-            </div>
-          </Reveal>
+    <>
+      {open && (
+        <div className="game" role="dialog" aria-modal="true" aria-label="Petualangan Jamur">
+          <div className="bar">{lang}<button onClick={fin}>{t.skip} ✕</button></div>
+          {s < 0 ? (
+            <div className="box tc"><img className="av" src="/jamur.jpg" alt="" width={120} height={120} />
+              <small>{t.hi}</small><h1>{c.name}</h1><p>{c.role[l]} — {c.tagline[l]}</p>
+              <button className="btn" onClick={() => setS(0)}>▶ {t.start}</button><small>{t.hint}</small></div>
+          ) : s < 5 ? (
+            <>
+              <div className="track" aria-hidden="true">
+                {K.map((k, i) => <span key={k} className={i <= s ? "on" : ""}>{IC[i]}</span>)}
+                <img className="me" src="/jamur.jpg" alt="" style={{ transform: `translateX(${s * 100}%)` }} />
+              </div>
+              <div className="box"><small>{s + 1}/5</small><h2>{IC[s]} {t[K[s]]}</h2>
+                <div className="sc"><Sec k={K[s]} c={c} l={l} /></div>
+                <div className="nav"><button onClick={() => setS(s - 1)}>◀ {t.back}</button><button className="btn" onClick={() => setS(s + 1)}>{t.next} ▶</button></div></div>
+            </>
+          ) : (
+            <div className="box tc"><div className="av big">🏆</div><h2>{t.done}</h2><p>{t.doneT}</p>
+              <button className="btn" onClick={fin}>{t.enter} ▶</button><button onClick={() => setS(-1)}>{t.replay}</button></div>
+          )}
         </div>
-        <div className="hero-art" aria-hidden="true">
-          <div className="art-grid"/>
-          <div className="art-ring ring-a"/><div className="art-ring ring-b"/>
-          <div className="art-cross cross-a">+</div><div className="art-cross cross-b">+</div>
-          <div className="mushroom-sticker"><span>🍄</span><small>IDEAS<br/>GROW HERE</small></div>
-          <span className="art-coordinate">06° S / 107° E</span>
-          <span className="art-side-label">A SMALL SYMBOL. A BIG ECOSYSTEM.</span>
-        </div>
-        <a className="scroll-cue" href="#about"><span>SCROLL TO EXPLORE</span><ArrowDown size={15}/></a>
-        <div className="hero-index">01 <span>/</span> 07</div>
-      </section>
-
-      <div className="marquee" aria-label="Curiosity, creativity, and code">
-        <div className="marquee-track"><span>CURIOUS BY NATURE</span><b>🍄</b><span>BUILT WITH PURPOSE</span><b>✳</b><span>ALWAYS EXPLORING</span><b>🍄</b><span>CURIOUS BY NATURE</span><b>✳</b><span>BUILT WITH PURPOSE</span><b>🍄</b></div>
-      </div>
-
-      <section id="about" className="section about-section shell">
-        <div className="section-heading"><span className="eyebrow">01 / THE PERSON BEHIND THE PIXELS</span><span className="section-aside">A LITTLE INTRODUCTION</span></div>
-        <div className="about-grid">
-          <Reveal><h2>Not just writing code.<br/><span>Growing possibilities.</span></h2></Reveal>
-          <Reveal delay={100} className="about-copy">
-            <p className="large-copy">{site.about}</p>
-            <div className="about-facts">
-              <div><span>NAME</span><strong>{site.fullName}</strong></div>
-              <div><span>ROLE</span><strong>{site.role}</strong></div>
-              <div><span>LOCATION</span><strong>{site.location}</strong></div>
-            </div>
-            <a className="underlined-link" href="#journey">Explore my journey <ArrowUpRight size={15}/></a>
-          </Reveal>
-        </div>
-        <div className="about-signature"><span>MY APPROACH</span><p>Observe <b>→</b> Experiment <b>→</b> Build <b>→</b> Improve</p><span className="signature-mushroom">🍄</span></div>
-      </section>
-
-      <section id="work" className="section work-section">
-        <div className="shell">
-          <div className="section-heading"><span className="eyebrow">02 / SELECTED WORKS</span><span className="section-aside">A FEW THINGS I'VE BEEN GROWING</span></div>
-          <div className="work-intro">
-            <Reveal><h2>Ideas made<br/><span>tangible.</span></h2></Reveal>
-            <Reveal delay={100}><p>Experiments, independent projects, and digital products. Each one is a chance to learn something new and make something useful.</p></Reveal>
-          </div>
-          <div className="filter-row" role="group" aria-label="Filter projects">
-            <span>FILTER BY</span>
-            <div>{categories.map((category) => <button key={category} className={filter === category ? "filter-active" : ""} onClick={() => setFilter(category)}>{category}</button>)}</div>
-          </div>
-          <div className="projects-grid">
-            {filteredProjects.map((project, index) => (
-              <Reveal key={project.slug} delay={index * 70} className="project-card-wrap">
-                <Link href={`/projects/${project.slug}`} className="project-card">
-                  <div className="project-card-art"><ProjectArtwork visual={project.visual}/><span className="project-open"><ArrowUpRight size={19}/></span></div>
-                  <div className="project-card-meta"><span>{project.number} / {project.category}</span><span className={`project-status ${project.status === "In Development" ? "status-live" : ""}`}>{project.status}</span></div>
-                  <div className="project-card-title"><h3>{project.name}</h3><ArrowUpRight size={19}/></div>
-                  <p>{project.shortDescription}</p>
-                </Link>
-              </Reveal>
-            ))}
-          </div>
-          <div className="work-footnote"><span>MORE EXPERIMENTS ARE ALWAYS IN PROGRESS.</span><span>🍄</span></div>
-        </div>
-      </section>
-
-      <section id="expertise" className="section expertise-section shell">
-        <div className="section-heading"><span className="eyebrow">03 / EXPERTISE & TOOLKIT</span><span className="section-aside">TOOLS ARE PART OF THE PROCESS</span></div>
-        <div className="expertise-intro"><Reveal><h2>Curiosity is the<br/><span>starting point.</span></h2></Reveal><Reveal delay={100}><p>I keep learning through practical work. Here's a snapshot of the technologies and tools I've explored or used in personal projects.</p></Reveal></div>
-        <div className="skills-grid">
-          {site.skills.map((skill, index) => <Reveal key={skill.group} delay={index * 70} className="skill-group"><div className="skill-number">0{index + 1}</div><h3>{skill.group}</h3><div className="tag-list">{skill.items.map((item) => <span className="tag" key={item}>{item}</span>)}</div></Reveal>)}
-        </div>
-        <p className="honesty-note"><Sparkles size={14}/> Skill lists are intentionally honest and can be updated as experience grows.</p>
-      </section>
-
-      <section id="journey" className="section journey-section">
-        <div className="shell">
-          <div className="section-heading"><span className="eyebrow">04 / THE JOURNEY</span><span className="section-aside">STILL GROWING, ALWAYS</span></div>
-          <div className="journey-intro"><Reveal><h2>Progress over<br/><span>perfection.</span></h2></Reveal><Reveal delay={100}><p>Every project leaves behind a new skill, a better question, or a different way of thinking.</p></Reveal></div>
-          <div className="timeline">
-            {site.journey.map((item, index) => <Reveal key={item.year} delay={index * 90} className="timeline-item"><div className="timeline-year">{item.year}</div><div className="timeline-marker"><span/></div><div className="timeline-content"><span>CHAPTER 0{index + 1}</span><h3>{item.title}</h3><p>{item.description}</p></div></Reveal>)}
-          </div>
-        </div>
-      </section>
-
-      <section id="services" className="section services-section shell">
-        <div className="section-heading"><span className="eyebrow">05 / WHAT I CAN HELP WITH</span><span className="section-aside">SELECTED SERVICES</span></div>
-        <div className="services-intro"><Reveal><h2>Let's build<br/><span>something useful.</span></h2></Reveal><Reveal delay={100}><p>Have a project in mind? I’m open to discussing clear, realistic projects where I can contribute and keep growing.</p></Reveal></div>
-        <div className="service-list">
-          {site.services.map((service) => <Reveal key={service.number} className="service-row"><span className="service-no">{service.number}</span><div><h3>{service.title}</h3><p>{service.description}</p></div><ArrowUpRight className="service-arrow" size={20}/></Reveal>)}
-        </div>
-        <p className="service-disclaimer">Project scope and availability are discussed before any commitment.</p>
-      </section>
-
-      <section id="contact" className="contact-section">
-        <div className="shell contact-inner">
-          <div className="section-heading"><span className="eyebrow">06 / CONTACT</span><span className="section-aside">THE NEXT IDEA COULD BE YOURS</span></div>
-          <Reveal><p className="contact-kicker">HAVE SOMETHING IN MIND?</p><h2>Let's make<br/>it <span>grow.</span><b>🍄</b></h2></Reveal>
-          <div className="contact-bottom">
-            <p>For freelance inquiries, collaborations, or just a good conversation about building things.</p>
-            <a className="button button-light" href={emailHref}>{site.email ? "Send me an email" : "Set up your email first"} <ArrowUpRight size={16}/></a>
-          </div>
-          <div className="social-row">
-            {socials.map((social, index) => {
-              const Icon = socialIcons[index] || Globe2;
-              return social.href
-                ? <a key={social.label} href={social.href} target="_blank" rel="noreferrer"><Icon size={15}/>{social.label}<ArrowUpRight size={12}/></a>
-                : <span key={social.label} className="social-placeholder"><Icon size={15}/>{social.label}<small>ADD LINK</small></span>;
-            })}
-          </div>
-        </div>
-      </section>
-
-      <footer className="footer shell">
-        <Link href="#home" className="wordmark"><span className="brand-mushroom">🍄</span> ZAENISHI<span className="brand-dot">®</span></Link>
-        <span>© {new Date().getFullYear()} ZAENISHI. Built with curiosity.</span>
-        <a href="#home" className="back-top">BACK TO TOP <ArrowUpRight size={13}/></a>
-      </footer>
-      <div className="cursor-note" aria-hidden="true"><MousePointer2 size={13}/> KEEP EXPLORING</div>
-    </main>
+      )}
+      <header className="top"><button className="brand" onClick={logo} aria-label="ZAENISHI"><span>🍄</span> {c.name}</button>
+        <nav aria-label="Menu">{K.map((k) => <a key={k} href={"#" + k}>{t[k]}</a>)}</nav>{lang}</header>
+      <main>
+        <section className="hero"><img className="av" src="/jamur.jpg" alt={`${c.full} — ${c.name}`} width={160} height={160} />
+          <div><small>{t.hi}</small><h1>{c.name}</h1><p className="role">{c.full} · {c.role[l]}</p><p>{c.tagline[l]}</p>
+            <p><a className="btn" href="#work">{t.work} ↓</a> <button onClick={() => { setS(-1); setOpen(true); try { localStorage.removeItem("jm_d"); } catch {} }}>🎮 {t.replay}</button></p></div></section>
+        {K.map((k, i) => <section key={k} id={k} className="sec"><h2>{IC[i]} {t[k]}</h2><Sec k={k} c={c} l={l} /></section>)}
+      </main>
+      <footer>© {new Date().getFullYear()} {c.name} · 🍄</footer>
+    </>
   );
 }
